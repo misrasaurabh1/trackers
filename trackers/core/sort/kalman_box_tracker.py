@@ -33,28 +33,11 @@ class SORTKalmanBoxTracker:
         return next_id
 
     def __init__(self, bbox: np.ndarray) -> None:
-        # Initialize with a temporary ID of -1
-        # Will be assigned a real ID when the track is considered mature
         self.tracker_id = -1
-
-        # Number of hits indicates how many times the object has been
-        # updated successfully
         self.number_of_successful_updates = 1
-        # Number of frames since the last update
         self.time_since_update = 0
-
-        # For simplicity, we keep a small state vector:
-        # (x, y, x2, y2, vx, vy, vx2, vy2).
-        # We'll store the bounding box in "self.state"
         self.state = np.zeros((8, 1), dtype=np.float32)
-
-        # Initialize state directly from the first detection
-        self.state[0] = bbox[0]
-        self.state[1] = bbox[1]
-        self.state[2] = bbox[2]
-        self.state[3] = bbox[3]
-
-        # Basic constant velocity model
+        self.state[0:4] = bbox.reshape((4, 1))
         self._initialize_kalman_filter()
 
     def _initialize_kalman_filter(self) -> None:
@@ -124,12 +107,5 @@ class SORTKalmanBoxTracker:
         Returns:
             np.ndarray: The bounding box [x1, y1, x2, y2].
         """
-        return np.array(
-            [
-                self.state[0],  # x1
-                self.state[1],  # y1
-                self.state[2],  # x2
-                self.state[3],  # y2
-            ],
-            dtype=float,
-        ).reshape(-1)
+        # Directly return a copy of a slice to avoid extra overhead
+        return self.state[0:4, 0].copy()

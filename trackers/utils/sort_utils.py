@@ -57,15 +57,18 @@ def get_iou_matrix(
     Returns:
         np.ndarray: IOU cost matrix.
     """
-    predicted_boxes = np.array([t.get_state_bbox() for t in trackers])
-    if len(predicted_boxes) == 0 and len(trackers) > 0:
-        # Handle case where get_state_bbox might return empty array
-        predicted_boxes = np.zeros((len(trackers), 4), dtype=np.float32)
+    num_trackers = len(trackers)
+    num_detections = detection_boxes.shape[0]
 
-    if len(trackers) > 0 and len(detection_boxes) > 0:
-        iou_matrix = box_iou_batch(predicted_boxes, detection_boxes)
-    else:
-        iou_matrix = np.zeros((len(trackers), len(detection_boxes)), dtype=np.float32)
+    if num_trackers == 0 or num_detections == 0:
+        return np.zeros((num_trackers, num_detections), dtype=np.float32)
+
+    predicted_boxes = np.empty((num_trackers, 4), dtype=np.float32)
+
+    for i, tracker in enumerate(trackers):
+        predicted_boxes[i] = tracker.get_state_bbox()
+
+    iou_matrix = box_iou_batch(predicted_boxes, detection_boxes)
 
     return iou_matrix
 
